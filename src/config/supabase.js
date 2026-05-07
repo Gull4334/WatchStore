@@ -1,5 +1,6 @@
 // src/config/supabase.js
 const { createClient } = require('@supabase/supabase-js');
+const ws = require('ws');
 
 const { SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY } = process.env;
 
@@ -18,14 +19,17 @@ const normalizeSupabaseUrl = (url) => {
 
 const baseUrl = normalizeSupabaseUrl(SUPABASE_URL);
 
-// Public client — respects RLS (customer-facing reads)
-const supabase = createClient(baseUrl, SUPABASE_ANON_KEY, {
+const commonOptions = {
   auth: { persistSession: false },
-});
+  realtime: {
+    transport: ws,
+  },
+};
+
+// Public client — respects RLS (customer-facing reads)
+const supabase = createClient(baseUrl, SUPABASE_ANON_KEY, commonOptions);
 
 // Admin client — bypasses RLS (all server-side writes)
-const supabaseAdmin = createClient(baseUrl, SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { persistSession: false },
-});
+const supabaseAdmin = createClient(baseUrl, SUPABASE_SERVICE_ROLE_KEY, commonOptions);
 
 module.exports = { supabase, supabaseAdmin };
