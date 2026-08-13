@@ -11,6 +11,7 @@ const {
   validateDiscountSchema,
   placeOrderSchema,
   trackOrderSchema,
+  refundRequestSchema,
 } = require('../validators/public.validators');
 const { buildWaLink } = require('../utils/whatsapp');
 
@@ -176,6 +177,59 @@ router.get('/orders/track', validateQuery(trackOrderSchema), async (req, res) =>
       dispatched:         row.step_dispatched,
       delivered:          row.step_delivered,
     },
+  });
+});
+
+// A10 — Request a return/refund for a delivered order
+router.post('/orders/refund-request', validate(refundRequestSchema), async (req, res) => {
+  const { order_number, whatsapp_number, reason } = req.body;
+
+  const { data: order, error } = await supabaseAdmin
+    .from('orders')
+    .select('id, order_number, status, total_amount, whatsapp_number')
+    .eq('order_number', order_number)
+    .single();
+
+  if (error || !order) return R.notFound(res, 'Order not found. Please check your order number.');
+  if (order.whatsapp_number !== whatsapp_number) {
+    return R.notFound(res, 'Order not found. Please check your order number and WhatsApp number.');
+  }
+  if (order.status !== 'delivered') {
+    return R.business(res, 'Returns can only be requested for orders that have been delivered.');
+  }
+
+  const { data: existing } = await supabaseAdmin
+    .from('refunds')
+    .select('id, status')
+    .eq('order_id', order.id)
+    .in('status', ['pending', 'approved', 'processed'])
+    .maybeSingle();
+
+  if (existing) {
+    return R.business(res, `A return request for this order already exists (status: ${existing.status}).`);
+  }
+
+  const { data: refund, error: refundErr } = await supabaseAdmin
+    .from('refunds')
+    .insert({
+      order_id: order.id,
+      amount:   order.total_amount,
+      reason,
+      status:   'pending',
+    })
+    .select('id, status, requested_at')
+    .single();
+
+  if (refundErr) {
+    console.error('Refund request error:', refundErr);
+    return R.error(res, 'Failed to submit return request. Please try again.');
+  }
+
+  return R.created(res, {
+    refund_id:     refund.id,
+    order_number:  order.order_number,
+    status:        refund.status,
+    requested_at:  refund.requested_at,
   });
 });
 

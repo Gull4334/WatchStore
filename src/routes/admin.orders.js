@@ -138,6 +138,16 @@ router.get('/:id', async (req, res) => {
     .select('product_name, quantity, unit_price, subtotal, product_id')
     .eq('order_id', id);
 
+  // v_order_detail doesn't expose the payments row id, but the admin UI
+  // needs it to confirm/reject the payment — fetch it separately.
+  const { data: paymentRow } = await supabaseAdmin
+    .from('payments')
+    .select('id')
+    .eq('order_id', id)
+    .order('submitted_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   // Build timeline steps
   const statusOrder = ['pending_payment','payment_submitted','payment_confirmed','dispatched','delivered'];
   const currentIdx  = statusOrder.indexOf(order.status);
@@ -154,6 +164,7 @@ router.get('/:id', async (req, res) => {
     ...order,
     items:          items || [],
     payment: {
+      payment_id:           paymentRow?.id || null,
       screenshot_url:       order.screenshot_url,
       transaction_ref:      order.transaction_ref,
       status:               order.payment_status,

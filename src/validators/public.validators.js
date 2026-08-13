@@ -51,10 +51,18 @@ const screenshotBodySchema = z.object({
   transaction_ref: z.string().optional(),
 });
 
+// ── A10 — Return / refund request ─────────────────────────────
+const refundRequestSchema = z.object({
+  order_number:    z.string().regex(/^WPK-\d{5}$/, 'Format must be WPK-XXXXX'),
+  whatsapp_number: z.string().regex(/^03\d{9}$/, 'WhatsApp number must be 11-digit Pakistani format: 03XXXXXXXXX'),
+  reason:          z.string().min(10, 'Please describe your reason in at least 10 characters'),
+});
+
 module.exports = {
   productQuerySchema,
   validateDiscountSchema,
   placeOrderSchema,
   trackOrderSchema,
   screenshotBodySchema,
+  refundRequestSchema,
 };

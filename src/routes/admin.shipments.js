@@ -19,7 +19,7 @@ router.get('/', validateQuery(shipmentsQuerySchema), async (req, res) => {
     .from('orders')
     .select(`
       id, order_number, customer_name, whatsapp_number, city, total_amount,
-      status as order_status,
+      order_status:status,
       shipments ( id, tcs_tracking_number, courier, estimated_delivery_date, status, dispatched_at, delivered_at )
     `, { count: 'exact' })
     .in('status', ['payment_confirmed', 'dispatched', 'delivered'])
@@ -34,22 +34,27 @@ router.get('/', validateQuery(shipmentsQuerySchema), async (req, res) => {
   const { data, error, count } = await orderQuery;
   if (error) return R.error(res, 'Failed to load shipments');
 
-  const formatted = data.map(o => ({
-    order_id:                o.id,
-    order_number:            o.order_number,
-    customer_name:           o.customer_name,
-    whatsapp_number:         o.whatsapp_number,
-    city:                    o.city,
-    total_amount:            o.total_amount,
-    order_status:            o.order_status,
-    shipment_id:             o.shipments?.[0]?.id || null,
-    courier:                 o.shipments?.[0]?.courier || null,
-    tcs_tracking_number:     o.shipments?.[0]?.tcs_tracking_number || null,
-    shipment_status:         o.shipments?.[0]?.status || 'ready_to_dispatch',
-    estimated_delivery_date: o.shipments?.[0]?.estimated_delivery_date || null,
-    dispatched_at:           o.shipments?.[0]?.dispatched_at || null,
-    delivered_at:            o.shipments?.[0]?.delivered_at || null,
-  }));
+  const formatted = data.map(o => {
+    // order_id -> shipments is a one-to-one relation; PostgREST returns
+    // a single object for unique FKs and an array otherwise — handle both.
+    const shipment = Array.isArray(o.shipments) ? o.shipments[0] : o.shipments;
+    return {
+      order_id:                o.id,
+      order_number:            o.order_number,
+      customer_name:           o.customer_name,
+      whatsapp_number:         o.whatsapp_number,
+      city:                    o.city,
+      total_amount:            o.total_amount,
+      order_status:            o.order_status,
+      shipment_id:             shipment?.id || null,
+      courier:                 shipment?.courier || null,
+      tcs_tracking_number:     shipment?.tcs_tracking_number || null,
+      shipment_status:         shipment?.status || 'ready_to_dispatch',
+      estimated_delivery_date: shipment?.estimated_delivery_date || null,
+      dispatched_at:           shipment?.dispatched_at || null,
+      delivered_at:            shipment?.delivered_at || null,
+    };
+  });
 
   return R.success(res, { data: formatted, total: count, limit, offset });
 });

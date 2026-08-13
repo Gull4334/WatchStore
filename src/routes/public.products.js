@@ -1,9 +1,10 @@
 // src/routes/public.products.js
 // A4 — GET /api/products
 // A5 — GET /api/products/featured
+// A6 — GET /api/products/:id/images
 
 const router       = require('express').Router();
-const { supabase } = require('../config/supabase');
+const { supabase, supabaseAdmin } = require('../config/supabase');
 const R            = require('../utils/response');
 const { validateQuery } = require('../middleware/validate');
 const { productQuerySchema } = require('../validators/public.validators');
@@ -55,6 +56,22 @@ router.get('/', validateQuery(productQuerySchema), async (req, res) => {
   if (error) return R.error(res, 'Failed to load products');
 
   return R.success(res, { data, total: count, limit, offset });
+});
+
+// A6 — Gallery images for a single product (product_images has no anon
+// grants by design, since it's admin-managed — read via service role,
+// this route only ever exposes public storage URLs, nothing sensitive)
+router.get('/:id/images', async (req, res) => {
+  const { id } = req.params;
+
+  const { data, error } = await supabaseAdmin
+    .from('product_images')
+    .select('id, image_url, sort_order')
+    .eq('product_id', id)
+    .order('sort_order', { ascending: true });
+
+  if (error) return R.error(res, 'Failed to load product images');
+  return R.success(res, data || []);
 });
 
 module.exports = router;

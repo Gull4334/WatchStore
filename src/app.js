@@ -46,6 +46,12 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+// Admin panel lives at /admincasiosociety instead of the default static
+// filename, so it isn't discoverable at an obvious path like /admin.
+app.get(['/admincasiosociety', '/admincasiosociety/'], (_req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'admincasiosociety.html'));
+});
+
 // ── Rate limiting ────────────────────────────────────────────
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,    // 15 minutes
