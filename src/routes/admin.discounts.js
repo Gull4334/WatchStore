@@ -1,8 +1,10 @@
 // src/routes/admin.discounts.js
-// B25 — GET   /api/admin/discounts
-// B26 — POST  /api/admin/discounts
-// B27 — PUT   /api/admin/discounts/:id
-// B28 — PATCH /api/admin/discounts/:id/disable
+// B25 — GET    /api/admin/discounts
+// B26 — POST   /api/admin/discounts
+// B27 — PUT    /api/admin/discounts/:id
+// B28 — PATCH  /api/admin/discounts/:id/disable
+// B28b — PATCH  /api/admin/discounts/:id/enable
+// B29 — DELETE /api/admin/discounts/:id
 
 const router         = require('express').Router();
 const { supabaseAdmin } = require('../config/supabase');
@@ -81,6 +83,58 @@ router.patch('/:id/disable', async (req, res) => {
 
   if (error || !data) return R.notFound(res, 'Discount code not found');
   return R.success(res, data);
+});
+
+// B28b — Re-enable a disabled discount code
+router.patch('/:id/enable', async (req, res) => {
+  const { id } = req.params;
+
+  const { data, error } = await supabaseAdmin
+    .from('discounts')
+    .update({ status: 'active' })
+    .eq('id', id)
+    .select('id, code, status')
+    .single();
+
+  if (error || !data) return R.notFound(res, 'Discount code not found');
+  return R.success(res, data);
+});
+
+// B29 — Delete a discount code (blocked if it's been used on any order —
+// disable it instead to stop new redemptions without breaking order history)
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const { data: existing, error: findErr } = await supabaseAdmin
+    .from('discounts')
+    .select('id, code')
+    .eq('id', id)
+    .single();
+  if (findErr || !existing) return R.notFound(res, 'Discount code not found');
+
+  const { count } = await supabaseAdmin
+    .from('orders')
+    .select('id', { count: 'exact', head: true })
+    .eq('discount_id', id);
+
+  if ((count ?? 0) > 0) {
+    return R.business(
+      res,
+      `Cannot delete "${existing.code}" — it has been used on ${count} order${count === 1 ? '' : 's'}. Disable it instead to stop new redemptions.`
+    );
+  }
+
+  const { error } = await supabaseAdmin.from('discounts').delete().eq('id', id);
+  if (error) return R.error(res, 'Failed to delete discount code');
+
+  await supabaseAdmin.from('activity_logs').insert({
+    admin_id:   req.admin.id,
+    event_type: 'discount_deleted',
+    description:`Discount code "${existing.code}" deleted`,
+    metadata:   { discount_id: id, code: existing.code },
+  });
+
+  return R.success(res, { deleted: true });
 });
 
 module.exports = router;

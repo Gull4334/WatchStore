@@ -1060,12 +1060,12 @@ tbody td {
     <div class="sb-item" onclick="goTo('orders',this)">
       <span class="sb-item-icon">◫</span>
       <span class="sb-item-label">Orders</span>
-      <span class="sb-badge">3</span>
+      <span class="sb-badge" id="sbOrdersBadge" style="display:none"></span>
     </div>
     <div class="sb-item" onclick="goTo('payments',this)">
       <span class="sb-item-icon">◈</span>
       <span class="sb-item-label">Payments</span>
-      <span class="sb-badge">2</span>
+      <span class="sb-badge" id="sbPaymentsBadge" style="display:none"></span>
     </div>
     <div class="sb-item" onclick="goTo('shipments',this)">
       <span class="sb-item-icon">◉</span>
@@ -1103,6 +1103,7 @@ tbody td {
     <div class="sb-item" onclick="goTo('refunds',this)">
       <span class="sb-item-icon">↺</span>
       <span class="sb-item-label">Refunds</span>
+      <span class="sb-badge" id="sbRefundsBadge" style="display:none"></span>
     </div>
   </div>
 
@@ -1483,7 +1484,7 @@ tbody td {
       <div class="ph">
         <div><div class="ph-ti">DISCOUNTS</div><div class="ph-sub">Promo codes and discount management</div></div>
         <div class="ph-actions">
-          <button class="btn btn-gold" onclick="openModal('discModal')">+ Create Code</button>
+          <button class="btn btn-gold" onclick="openAddDiscount()">+ Create Code</button>
         </div>
       </div>
       <div class="disc-cards" id="discCards"></div>
@@ -1573,10 +1574,10 @@ tbody td {
         <div><div class="ph-ti">REFUNDS</div><div class="ph-sub">Manage customer refund requests</div></div>
       </div>
       <div class="stat-grid">
-        <div class="stat-card c-blue"><div class="sc-eyebrow">Requested</div><div class="sc-value">2</div></div>
-        <div class="stat-card c-red"><div class="sc-eyebrow">Approved</div><div class="sc-value">1</div></div>
-        <div class="stat-card c-green"><div class="sc-eyebrow">Processed</div><div class="sc-value">8</div></div>
-        <div class="stat-card"><div class="sc-eyebrow">Total Refunded</div><div class="sc-value gold">84K</div></div>
+        <div class="stat-card c-blue"><div class="sc-eyebrow">Requested</div><div class="sc-value" id="refStatRequested">—</div></div>
+        <div class="stat-card c-red"><div class="sc-eyebrow">Approved</div><div class="sc-value" id="refStatApproved">—</div></div>
+        <div class="stat-card c-green"><div class="sc-eyebrow">Processed</div><div class="sc-value" id="refStatProcessed">—</div></div>
+        <div class="stat-card"><div class="sc-eyebrow">Total Refunded</div><div class="sc-value gold" id="refStatTotal">—</div></div>
       </div>
       <div class="card">
         <div class="tbl-wrap">
@@ -1841,24 +1842,24 @@ tbody td {
 <div class="modal-bg" id="discModal">
   <div class="modal modal-slim">
     <div class="modal-hd">
-      <div class="modal-ti">CREATE PROMO CODE</div>
-      <button class="modal-cl" onclick="closeModal('discModal')">✕</button>
+      <div class="modal-ti" id="discModalTi">CREATE PROMO CODE</div>
+      <button class="modal-cl" onclick="closeModal('discModal');resetDiscountModal()">✕</button>
     </div>
     <div class="modal-body">
-      <div class="fg"><label class="fl">Promo Code *</label><input class="fi" placeholder="e.g. CASIO10" style="text-transform:uppercase;font-family:var(--ff-m);letter-spacing:2px"></div>
+      <div class="fg"><label class="fl">Promo Code *</label><input class="fi" id="dm-code" placeholder="e.g. CASIO10" style="text-transform:uppercase;font-family:var(--ff-m);letter-spacing:2px"></div>
       <div class="fg-row">
-        <div class="fg"><label class="fl">Type</label><select class="fsel"><option>Percentage (%)</option><option>Fixed (PKR)</option></select></div>
-        <div class="fg"><label class="fl">Value *</label><input class="fi" type="number" placeholder="10"></div>
+        <div class="fg"><label class="fl">Type</label><select class="fsel" id="dm-type"><option>Percentage (%)</option><option>Fixed (PKR)</option></select></div>
+        <div class="fg"><label class="fl">Value *</label><input class="fi" id="dm-value" type="number" placeholder="10"></div>
       </div>
       <div class="fg-row">
-        <div class="fg"><label class="fl">Min Order (PKR)</label><input class="fi" type="number" placeholder="0"></div>
-        <div class="fg"><label class="fl">Max Uses</label><input class="fi" type="number" placeholder="Unlimited"></div>
+        <div class="fg"><label class="fl">Min Order (PKR)</label><input class="fi" id="dm-min" type="number" placeholder="0"></div>
+        <div class="fg"><label class="fl">Max Uses</label><input class="fi" id="dm-max" type="number" placeholder="Unlimited"></div>
       </div>
-      <div class="fg"><label class="fl">Expiry Date</label><input class="fi" type="date"></div>
+      <div class="fg"><label class="fl">Expiry Date</label><input class="fi" id="dm-expiry" type="date"></div>
     </div>
     <div class="modal-ft">
-      <button class="btn btn-outline" onclick="closeModal('discModal')">Cancel</button>
-      <button class="btn btn-gold" onclick="saveDiscountAction()">CREATE CODE</button>
+      <button class="btn btn-outline" onclick="closeModal('discModal');resetDiscountModal()">Cancel</button>
+      <button class="btn btn-gold" id="discModalSaveBtn" onclick="saveDiscountAction()">CREATE CODE</button>
     </div>
   </div>
 </div>
@@ -1968,6 +1969,7 @@ async function doLogin() {
     document.getElementById('sbUserRole').textContent = (data.admin?.role || 'admin').toUpperCase();
     showApp();
     renderDashboard();
+    updateRefundsBadge();
   } catch (e) {
     toast('Login failed: ' + e.message, 'error');
   } finally {
@@ -2034,6 +2036,18 @@ function badge(status) {
   return `<span class="badge ${cls}">${label}</span>`;
 }
 function pkr(n) { return 'PKR ' + Number(n).toLocaleString(); }
+
+// Actionable sidebar nav badges — hidden entirely at 0, shown otherwise
+function setSidebarBadge(id, count) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (count > 0) {
+    el.textContent = count;
+    el.style.display = 'inline-block';
+  } else {
+    el.style.display = 'none';
+  }
+}
 function img(src, cls='') {
   return `<img src="${src}" onerror="this.onerror=null;this.src='${FB}'" alt="" class="${cls}" style="object-fit:cover;">`;
 }
@@ -2202,11 +2216,9 @@ async function renderDashboard() {
         <div class="qa-arrow">→</div>
       </div>`;
 
-    // Badge counts in sidebar
-    const ordBadge = document.querySelector('.sb-item[onclick*="orders"] .sb-badge');
-    if (ordBadge) ordBadge.textContent = s.pending_verification ?? '';
-    const payBadge = document.querySelector('.sb-item[onclick*="payments"] .sb-badge');
-    if (payBadge) payBadge.textContent = s.pending_verification ?? '';
+    // Badge counts in sidebar — hidden entirely when there's nothing to act on
+    setSidebarBadge('sbOrdersBadge', s.pending_verification);
+    setSidebarBadge('sbPaymentsBadge', s.pending_verification);
 
     // Bar chart
     const vals = (byDay || []).map(d => d.order_count);
@@ -3073,7 +3085,7 @@ async function saveCategoryAction() {
 async function renderDiscounts() {
   try {
     const data = await apiFetch('/api/admin/discounts');
-    STATE.discounts = Array.isArray(data) ? data : [];
+    STATE.discounts = Array.isArray(data) ? data : (data?.data || []);
 
     // Cards
     document.getElementById('discCards').innerHTML = STATE.discounts.slice(0,3).map(d => `
@@ -3099,9 +3111,9 @@ async function renderDiscounts() {
         <td><div class="td-mono">${d.expires_at ? fmtDate(d.expires_at) : 'Never'}</div></td>
         <td>${badge(d.status==='active'?'active':'inactive')}</td>
         <td>${tdActions(
-          iconBtn('✏','Edit'),
-          d.status==='active' ? iconBtn('⏸','Disable','',`disableDiscount('${d.id}','${d.code}')`) : '',
-          iconBtn('✕','Delete','danger',`toast('Use database to delete codes','info')`)
+          iconBtn('✏','Edit','',`openEditDiscount('${d.id}')`),
+          d.status==='active' ? iconBtn('⏸','Disable','',`disableDiscount('${d.id}','${d.code}')`) : iconBtn('▶','Enable','success',`enableDiscount('${d.id}','${d.code}')`),
+          iconBtn('✕','Delete','danger',`deleteDiscountAction('${d.id}','${(d.code||'').replace(/'/g,"\\'")}')`)
         )}</td>
       </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">No promo codes</td></tr>';
   } catch(e) { toast('Discounts load error: ' + e.message, 'error'); }
@@ -3115,29 +3127,86 @@ async function disableDiscount(id, code) {
   } catch(e) { toast('Disable failed: ' + e.message, 'error'); }
 }
 
+async function enableDiscount(id, code) {
+  try {
+    await apiFetch(`/api/admin/discounts/${id}/enable`, { method:'PATCH' });
+    toast(`Code ${code} enabled`, 'success');
+    renderDiscounts();
+  } catch(e) { toast('Enable failed: ' + e.message, 'error'); }
+}
+
+async function deleteDiscountAction(id, code) {
+  if (!confirm(`Delete discount code "${code}"?`)) return;
+  try {
+    await apiFetch(`/api/admin/discounts/${id}`, { method: 'DELETE' });
+    toast(`Code ${code} deleted`, 'success');
+    renderDiscounts();
+  } catch(e) { toast(e.message || 'Delete failed', 'error'); }
+}
+
+let editingDiscountId = null;
+
+function resetDiscountModal() {
+  editingDiscountId = null;
+  document.getElementById('discModalTi').textContent = 'CREATE PROMO CODE';
+  document.getElementById('discModalSaveBtn').textContent = 'CREATE CODE';
+  document.getElementById('dm-code').value = '';
+  document.getElementById('dm-type').value = 'Percentage (%)';
+  document.getElementById('dm-value').value = '';
+  document.getElementById('dm-min').value = '';
+  document.getElementById('dm-max').value = '';
+  document.getElementById('dm-expiry').value = '';
+}
+
+function openAddDiscount() {
+  resetDiscountModal();
+  openModal('discModal');
+}
+
+function openEditDiscount(id) {
+  const d = STATE.discounts.find(x => x.id === id);
+  if (!d) return;
+  resetDiscountModal();
+  editingDiscountId = id;
+  document.getElementById('discModalTi').textContent = 'EDIT PROMO CODE';
+  document.getElementById('discModalSaveBtn').textContent = 'SAVE CHANGES';
+  document.getElementById('dm-code').value = d.code || '';
+  document.getElementById('dm-type').value = d.discount_type === 'percentage' ? 'Percentage (%)' : 'Fixed (PKR)';
+  document.getElementById('dm-value').value = d.discount_value ?? '';
+  document.getElementById('dm-min').value = d.min_order_value || '';
+  document.getElementById('dm-max').value = d.max_uses || '';
+  document.getElementById('dm-expiry').value = d.expires_at ? d.expires_at.slice(0,10) : '';
+  openModal('discModal');
+}
+
 async function saveDiscountAction() {
-  const code = document.querySelector('#discModal input[placeholder*="CASIO"]')?.value?.trim().toUpperCase();
-  const typeEl = document.querySelector('#discModal .fsel');
-  const valueEl = document.querySelectorAll('#discModal input[type="number"]')[0];
-  const minEl  = document.querySelectorAll('#discModal input[type="number"]')[1];
-  const maxEl  = document.querySelectorAll('#discModal input[type="number"]')[2];
-  const dateEl = document.querySelector('#discModal input[type="date"]');
-  if (!code || !valueEl?.value) { toast('Code and value required', 'error'); return; }
-  const discount_type = typeEl?.value?.startsWith('Perce') ? 'percentage' : 'fixed';
+  const code = document.getElementById('dm-code').value.trim().toUpperCase();
+  const discount_type = document.getElementById('dm-type').value.startsWith('Perce') ? 'percentage' : 'fixed';
+  const value = document.getElementById('dm-value').value;
+  const min = document.getElementById('dm-min').value;
+  const max = document.getElementById('dm-max').value;
+  const expiry = document.getElementById('dm-expiry').value;
+  if (!code || !value) { toast('Code and value required', 'error'); return; }
   const body = {
     code,
     discount_type,
-    discount_value: parseInt(valueEl.value),
-    min_order_value: parseInt(minEl?.value) || 0,
-    max_uses: maxEl?.value ? parseInt(maxEl.value) : null,
-    expires_at: dateEl?.value || null,
+    discount_value: parseInt(value),
+    min_order_value: parseInt(min) || 0,
   };
+  if (max) body.max_uses = parseInt(max);
+  if (expiry) body.expires_at = expiry;
   try {
-    await apiFetch('/api/admin/discounts', { method:'POST', body:JSON.stringify(body) });
+    if (editingDiscountId) {
+      await apiFetch(`/api/admin/discounts/${editingDiscountId}`, { method:'PUT', body:JSON.stringify(body) });
+      toast('Promo code updated', 'success');
+    } else {
+      await apiFetch('/api/admin/discounts', { method:'POST', body:JSON.stringify(body) });
+      toast('Promo code created', 'success');
+    }
     closeModal('discModal');
-    toast('Promo code created', 'success');
+    resetDiscountModal();
     renderDiscounts();
-  } catch(e) { toast('Create failed: ' + e.message, 'error'); }
+  } catch(e) { toast('Save failed: ' + e.message, 'error'); }
 }
 
 // ══════════════════════════════════════════════
@@ -3247,12 +3316,33 @@ async function viewCustomerOrders(customerId, name) {
 // ══════════════════════════════════════════════
 // REFUNDS
 // ══════════════════════════════════════════════
+async function updateRefundsBadge(list) {
+  if (!document.getElementById('sbRefundsBadge')) return;
+  try {
+    if (!list) {
+      const data = await apiFetch('/api/admin/refunds?limit=200');
+      list = Array.isArray(data) ? data : (data?.data || []);
+    }
+    const active = list.filter(r => r.status === 'pending' || r.status === 'approved').length;
+    setSidebarBadge('sbRefundsBadge', active);
+  } catch (e) {
+    // non-critical — leave badge as-is
+  }
+}
+
 async function renderRefunds() {
   const tbody = document.getElementById('refundsBody');
   setLoading(tbody, 'LOADING REFUNDS...');
   try {
-    const data = await apiFetch('/api/admin/refunds');
+    const data = await apiFetch('/api/admin/refunds?limit=200');
     STATE.refunds = Array.isArray(data) ? data : (data?.data || []);
+    updateRefundsBadge(STATE.refunds);
+
+    document.getElementById('refStatRequested').textContent = STATE.refunds.filter(r => r.status === 'pending').length;
+    document.getElementById('refStatApproved').textContent = STATE.refunds.filter(r => r.status === 'approved').length;
+    document.getElementById('refStatProcessed').textContent = STATE.refunds.filter(r => r.status === 'processed').length;
+    const totalRefunded = STATE.refunds.filter(r => r.status === 'processed').reduce((s, r) => s + (r.amount || 0), 0);
+    document.getElementById('refStatTotal').textContent = fmtMillion(totalRefunded);
     tbody.innerHTML = STATE.refunds.map(r => `
       <tr>
         <td><div class="td-order">${r.order_number}</div></td>
@@ -3262,8 +3352,10 @@ async function renderRefunds() {
         <td>${badge(r.status === 'pending' ? 'requested' : r.status)}</td>
         <td><div class="td-mono">${fmtDate(r.requested_at)}</div></td>
         <td>${tdActions(
-          r.status==='pending' ? `<button class="btn btn-green" style="padding:7px 12px;font-size:8px" onclick="approveRefund('${r.id}')">APPROVE</button>` : '',
-          r.status==='approved' ? `<button class="btn btn-gold" style="padding:7px 12px;font-size:8px" onclick="processRefund('${r.id}')">PROCESSED</button>` : ''
+          iconBtn('👁','View Order','',`viewOrder('${r.order_id}')`),
+          r.status==='pending' ? `<button class="btn btn-green" style="padding:7px 12px;font-size:8px" onclick="approveRefund('${r.refund_id}')">APPROVE</button>` : '',
+          r.status==='approved' ? `<button class="btn btn-gold" style="padding:7px 12px;font-size:8px" onclick="processRefund('${r.refund_id}')">PROCESSED</button>` : '',
+          ['pending','approved'].includes(r.status) ? `<button class="btn btn-red" style="padding:7px 12px;font-size:8px" onclick="rejectRefund('${r.refund_id}')">REJECT</button>` : ''
         )}</td>
       </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">No refund requests</td></tr>';
   } catch(e) { toast('Refunds load error: ' + e.message, 'error'); }
@@ -3283,6 +3375,16 @@ async function processRefund(id) {
     toast('Refund marked as processed', 'success');
     renderRefunds();
   } catch(e) { toast('Update failed: ' + e.message, 'error'); }
+}
+
+async function rejectRefund(id) {
+  const reason = prompt('Reason for rejecting this refund (optional):') || '';
+  if (reason === null) return;
+  try {
+    await apiFetch(`/api/admin/refunds/${id}/reject`, { method:'PATCH', body: JSON.stringify({ reason }) });
+    toast('Refund request rejected', 'info');
+    renderRefunds();
+  } catch(e) { toast('Reject failed: ' + e.message, 'error'); }
 }
 
 // ══════════════════════════════════════════════
@@ -3479,6 +3581,7 @@ setInterval(updateClock, 30000);
 if (AUTH_TOKEN) {
   showApp();
   renderDashboard();
+  updateRefundsBadge();
 } else {
   showLoginScreen();
 }

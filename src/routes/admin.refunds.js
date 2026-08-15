@@ -2,12 +2,13 @@
 // B31 — GET   /api/admin/refunds
 // B32 — PATCH /api/admin/refunds/:id/approve
 // B33 — PATCH /api/admin/refunds/:id/process
+// B34 — PATCH /api/admin/refunds/:id/reject
 
 const router         = require('express').Router();
 const { supabaseAdmin } = require('../config/supabase');
 const R              = require('../utils/response');
-const { validateQuery } = require('../middleware/validate');
-const { refundsQuerySchema } = require('../validators/admin.validators');
+const { validate, validateQuery } = require('../middleware/validate');
+const { refundsQuerySchema, rejectPaymentSchema } = require('../validators/admin.validators');
 
 // B31 — Refunds list
 router.get('/', validateQuery(refundsQuerySchema), async (req, res) => {
@@ -29,6 +30,7 @@ router.get('/', validateQuery(refundsQuerySchema), async (req, res) => {
 
   const formatted = data.map(r => ({
     refund_id:       r.id,
+    order_id:        r.orders?.id,
     order_number:    r.orders?.order_number,
     customer_name:   r.orders?.customer_name,
     whatsapp_number: r.orders?.whatsapp_number,
@@ -120,6 +122,43 @@ router.patch('/:id/process', async (req, res) => {
     order_status: 'refunded',
     processed_at: now,
   });
+});
+
+// B34 — Reject a refund request (pending or approved, but not yet processed)
+router.patch('/:id/reject', validate(rejectPaymentSchema), async (req, res) => {
+  const { id } = req.params;
+  const { reason } = req.body;
+
+  const { data: refund } = await supabaseAdmin
+    .from('refunds')
+    .select('id, status, order_id, amount')
+    .eq('id', id)
+    .single();
+
+  if (!refund) return R.notFound(res, 'Refund not found');
+  if (!['pending', 'approved'].includes(refund.status)) {
+    return R.business(res, `Cannot reject refund with status: ${refund.status}`);
+  }
+
+  const now = new Date().toISOString();
+
+  const { error } = await supabaseAdmin
+    .from('refunds')
+    .update({ status: 'rejected', processed_by: req.admin.id, processed_at: now })
+    .eq('id', id);
+
+  if (error) return R.error(res, 'Failed to reject refund');
+
+  await supabaseAdmin.from('activity_logs').insert({
+    order_id:   refund.order_id,
+    admin_id:   req.admin.id,
+    event_type: 'refund_rejected',
+    description:`Refund request of PKR ${refund.amount} rejected`,
+    amount:      refund.amount,
+    metadata:   { refund_id: id, reason: reason || null, rejected_by: req.admin.email },
+  });
+
+  return R.success(res, { refund_id: id, status: 'rejected', processed_at: now });
 });
 
 module.exports = router;

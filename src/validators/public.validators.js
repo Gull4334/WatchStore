@@ -52,9 +52,18 @@ const screenshotBodySchema = z.object({
 });
 
 // ── A10 — Return / refund request ─────────────────────────────
+// Orders always store whatsapp_number in canonical 03XXXXXXXXX form (that's
+// all placeOrderSchema accepts at checkout), but a customer typing it back
+// in later may naturally use "+92 346 4641077" or "0346-4641077" — normalize
+// before matching so a harmless formatting difference doesn't look like a
+// wrong number.
+const normalizePkPhone = (v) => v.replace(/[\s-]/g, '').replace(/^(\+92|0092|92)/, '0');
+
 const refundRequestSchema = z.object({
   order_number:    z.string().regex(/^WPK-\d{5}$/, 'Format must be WPK-XXXXX'),
-  whatsapp_number: z.string().regex(/^03\d{9}$/, 'WhatsApp number must be 11-digit Pakistani format: 03XXXXXXXXX'),
+  whatsapp_number: z.string()
+    .transform(normalizePkPhone)
+    .refine(v => /^03\d{9}$/.test(v), 'WhatsApp number must be a valid Pakistani number, e.g. 03001234567'),
   reason:          z.string().min(10, 'Please describe your reason in at least 10 characters'),
 });
 

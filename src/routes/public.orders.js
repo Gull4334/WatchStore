@@ -192,7 +192,7 @@ router.post('/orders/refund-request', validate(refundRequestSchema), async (req,
 
   if (error || !order) return R.notFound(res, 'Order not found. Please check your order number.');
   if (order.whatsapp_number !== whatsapp_number) {
-    return R.notFound(res, 'Order not found. Please check your order number and WhatsApp number.');
+    return R.notFound(res, "That WhatsApp number doesn't match the one used for this order. Please double-check and try again.");
   }
   if (order.status !== 'delivered') {
     return R.business(res, 'Returns can only be requested for orders that have been delivered.');
