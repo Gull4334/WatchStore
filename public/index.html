@@ -23,32 +23,39 @@ nav{position:fixed;top:0;left:0;right:0;z-index:500;height:68px;display:flex;ali
 .cart-pill span{font-family:var(--font-m);font-size:10px;letter-spacing:2px}
 .cbadge{background:var(--gold);color:var(--black);font-family:var(--font-m);font-size:9px;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center}
 
-.hero{min-height:100vh;display:grid;grid-template-columns:55% 45%;padding-top:68px;position:relative;overflow:hidden}
-.hero-glow{position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.07),transparent 70%);top:50%;left:55%;transform:translate(-50%,-50%);pointer-events:none}
-.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);background-size:72px 72px}
-.hero-l{display:flex;flex-direction:column;justify-content:center;padding:80px 60px 80px 80px;position:relative;z-index:2}
 .eyebrow{font-family:var(--font-m);font-size:10px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;display:flex;align-items:center;gap:14px;margin-bottom:28px}
 .eyebrow::before{content:'';width:36px;height:1px;background:var(--gold)}
-.hero-title{font-family:var(--font-d);font-size:clamp(80px,10vw,140px);line-height:.88;letter-spacing:2px;margin-bottom:32px}
-.hero-title .g{color:var(--gold)}.hero-title .o{-webkit-text-stroke:1px rgba(240,237,230,.25);color:transparent}
-.hero-desc{font-size:15px;line-height:1.8;color:var(--muted);max-width:400px;margin-bottom:44px}
 .ctas{display:flex;gap:14px;flex-wrap:wrap}
 .btn{font-family:var(--font-m);font-size:10px;letter-spacing:2.5px;text-transform:uppercase;padding:15px 34px;cursor:pointer;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:10px}
 .btn-gold{background:var(--gold);color:var(--black)}.btn-gold:hover{background:var(--gold-l);transform:translateY(-2px)}
 .btn-outline{background:none;border:1px solid var(--border);color:var(--white)}.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
 .btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
-.hero-stats{display:flex;gap:48px;margin-top:56px;padding-top:40px;border-top:1px solid var(--border)}
 .s-num{font-family:var(--font-d);font-size:40px;color:var(--gold);line-height:1}
 .s-lbl{font-family:var(--font-m);font-size:9px;letter-spacing:2px;color:var(--muted);margin-top:4px;text-transform:uppercase}
-.hero-r{position:relative;overflow:hidden}
-.hero-img{width:100%;height:100%;object-fit:cover;filter:brightness(.72) contrast(1.1)}
-.hero-ov{position:absolute;inset:0;background:linear-gradient(90deg,var(--black) 0%,transparent 40%),linear-gradient(to top,rgba(8,8,8,.8) 0%,transparent 50%)}
-.hfc{position:absolute;bottom:48px;right:48px;background:rgba(23,23,23,.93);border:1px solid var(--border);backdrop-filter:blur(12px);padding:20px 24px;min-width:200px}
-.hfc-lbl{font-family:var(--font-m);font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:6px}
-.hfc-nm{font-size:14px;font-weight:500;margin-bottom:8px}
-.hfc-pr{font-family:var(--font-d);font-size:28px;color:var(--gold)}
-.hfc-btn{margin-top:12px;background:var(--gold);color:var(--black);font-family:var(--font-m);font-size:9px;letter-spacing:2px;border:none;padding:9px 18px;cursor:pointer;width:100%;transition:background .2s}
-.hfc-btn:hover{background:var(--gold-l)}
+
+/* ── Homepage banner slider ─────────────────────── */
+.banner-slider{position:relative;width:100%;height:600px;overflow:hidden;background:radial-gradient(circle at 30% 40%,rgba(201,168,76,.08),transparent 60%),#0d0d0d;margin-top:68px;cursor:grab;touch-action:pan-y}
+.banner-slider.dragging{cursor:grabbing}
+.bs-track{display:flex;width:100%;height:100%;transition:transform .5s cubic-bezier(.22,.61,.36,1)}
+.bs-track.dragging{transition:none}
+.bs-slide{position:relative;flex:0 0 100%;width:100%;height:100%}
+.bs-slide img{width:100%;height:100%;object-fit:cover;-webkit-user-drag:none;user-select:none;pointer-events:none}
+.bs-ov{position:absolute;inset:0;}
+.bs-content{position:absolute;left:0;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center;padding:0 60px;max-width:580px;z-index:2;pointer-events:none}
+.bs-content>*{pointer-events:auto}
+.bs-heading{font-family:var(--font-d);font-size:clamp(34px,4.4vw,56px);letter-spacing:1px;line-height:1.05;margin-bottom:20px;color:var(--white)}
+.bs-desc{font-size:14px;line-height:1.8;color:rgba(240,237,230,.85);max-width:420px;margin-bottom:30px}
+.bs-cta{align-self:flex-start}
+.bs-dots{position:absolute;bottom:22px;left:0;right:0;display:flex;justify-content:center;gap:8px;z-index:3}
+.bs-dot{position:relative;width:48px;height:5px;border-radius:3px;background:rgba(255,255,255,.25);border:none;cursor:pointer;overflow:hidden;padding:0;transition:background .2s}
+.bs-dot:hover{background:rgba(255,255,255,.4)}
+.bs-dot-fill{position:absolute;inset:0;width:0;background:var(--gold);border-radius:3px}
+.bs-dot.on .bs-dot-fill{animation:bsProgress 5s linear forwards}
+.bs-dot.done .bs-dot-fill{width:100%}
+@keyframes bsProgress{from{width:0}to{width:100%}}
+
+.hero-stats-strip{background:var(--dark);border-bottom:1px solid var(--border);padding:30px 80px}
+.hero-stats{display:flex;gap:48px;justify-content:center}
 
 .ticker{background:var(--gold);overflow:hidden;white-space:nowrap;padding:10px 0}
 .tick-in{display:inline-flex;animation:tick 25s linear infinite}
@@ -327,9 +334,8 @@ footer{background:var(--dark);border-top:1px solid var(--border);padding:64px 80
 /* ================= RESPONSIVE ================= */
 @media(max-width:1024px){
 
-.hero{grid-template-columns:1fr;}
-.hero-l{padding:60px 24px;}
-.hero-r{height:400px;}
+.banner-slider{height:480px;}
+.bs-content{padding:0 32px;max-width:100%;}
 
 .cat-grid{grid-template-columns:repeat(3,1fr);}
 .prod-grid{grid-template-columns:repeat(2,1fr);}
@@ -345,8 +351,11 @@ footer{background:var(--dark);border-top:1px solid var(--border);padding:64px 80
 .nav-links{display:none;}
 .hamburger{display:flex;}
 
-.hero-title{font-size:48px;}
+.banner-slider{height:420px;}
+.bs-heading{font-size:30px;}
+.bs-desc{font-size:13px;margin-bottom:22px;}
 .hero-stats{flex-direction:column;gap:20px;}
+.hero-stats-strip{padding:24px 24px;}
 
 .cat-grid{grid-template-columns:1fr;}
 .prod-grid{grid-template-columns:1fr;}
@@ -391,26 +400,28 @@ footer{background:var(--dark);border-top:1px solid var(--border);padding:64px 80
   <a href="#about" onclick="closeMenu()">About</a>
 </div>
 
-<section class="hero">
-  <div class="hero-glow"></div><div class="hero-grid"></div>
-  <div class="hero-l">
-    <div class="eyebrow" id="eyebrowTxt">Pakistan's #1 Casio Destination</div>
-    <h1 class="hero-title">MASTER<br>YOUR<br><span class="g">TIME</span></h1>
-    <p class="hero-desc">100% authentic Casio watches — G‑Shock, Edifice, Pro Trek & more. Delivered across Pakistan via TCS. Pay via Meezan Bank, EasyPaisa or JazzCash.</p>
-    <div class="ctas">
-      <a href="#collection" class="btn btn-gold">Shop Collection →</a>
-      <a href="#track" class="btn btn-outline">Track Order</a>
-    </div>
-    <div class="hero-stats">
-      <div><div class="s-num">500+</div><div class="s-lbl">Watches Sold</div></div>
-      <div><div class="s-num">100%</div><div class="s-lbl">Authentic</div></div>
-      <div><div class="s-num">2–3</div><div class="s-lbl">Day Delivery</div></div>
+<section class="banner-slider" id="bannerSlider">
+  <div class="bs-track" id="bsTrack">
+    <div class="bs-slide">
+      <div class="bs-ov"></div>
+      <div class="bs-content">
+        <div class="eyebrow">Pakistan's #1 Casio Destination</div>
+        <h1 class="bs-heading">MASTER YOUR TIME</h1>
+        <p class="bs-desc">100% authentic Casio watches — G‑Shock, Edifice, Pro Trek &amp; more. Delivered across Pakistan via TCS. Pay via Meezan Bank, EasyPaisa or JazzCash.</p>
+        <a href="#collection" class="btn btn-gold bs-cta">Shop Collection →</a>
+      </div>
     </div>
   </div>
-  <div class="hero-r" id="heroFeatured">
-    <div class="hero-ov"></div>
-  </div>
+  <div class="bs-dots" id="bsDots"></div>
 </section>
+
+<div class="hero-stats-strip">
+  <div class="hero-stats" id="heroStats">
+    <div><div class="s-num">500+</div><div class="s-lbl">Watches Sold</div></div>
+    <div><div class="s-num">100%</div><div class="s-lbl">Authentic</div></div>
+    <div><div class="s-num">2–3</div><div class="s-lbl">Day Delivery</div></div>
+  </div>
+</div>
 
 <div class="ticker">
   <div class="tick-in" id="tickerIn">
@@ -658,6 +669,11 @@ async function loadSettings() {
   try {
     SETTINGS = await api('/settings/public');
     shippingFee = SETTINGS.shipping_fee ?? 200;
+    if (Array.isArray(SETTINGS.hero_stats) && SETTINGS.hero_stats.length) {
+      document.getElementById('heroStats').innerHTML = SETTINGS.hero_stats
+        .map(s => `<div><div class="s-num">${s.value}</div><div class="s-lbl">${s.label}</div></div>`)
+        .join('');
+    }
     if (SETTINGS.ticker_text) {
       const items = SETTINGS.ticker_text.split('|').map(t => t.trim()).filter(Boolean);
       if (items.length) {
@@ -719,24 +735,109 @@ async function loadProducts() {
   }));
 
   renderProds();
-  renderFeatured();
 }
 
-async function renderFeatured() {
+// ── Homepage banner slider ─────────────────────────────
+let bsSlides = [];
+let bsIndex = 0;
+let bsTimer = null;
+const BS_INTERVAL = 5000;
+
+async function loadBannerSlides() {
   try {
-    const p = await api('/products/featured');
-    document.getElementById('heroFeatured').innerHTML = `
-      <img class="hero-img" src="${p.image_url}" alt="${p.name}">
-      <div class="hero-ov"></div>
-      <div class="hfc">
-        <div class="hfc-lbl">FEATURED WATCH</div>
-        <div class="hfc-nm">${p.name}</div>
-        <div class="hfc-pr">PKR ${Number(p.price).toLocaleString()}</div>
-        <button class="hfc-btn" onclick='addToCart({id:"${p.id}",brand:"${p.brand||'Casio'}",name:${JSON.stringify(p.name)},price:${p.price},img:"${p.image_url}",cat:"${p.category_slug}"})'>ADD TO CART</button>
-      </div>`;
+    const data = await api('/banners');
+    if (Array.isArray(data) && data.length) bsSlides = data;
   } catch (e) {
-    console.error('Failed to load featured product', e);
+    console.error('Failed to load banner slides', e);
   }
+
+  if (bsSlides.length) {
+    const trackEl = document.getElementById('bsTrack');
+    trackEl.innerHTML = bsSlides.map(s => `
+      <div class="bs-slide">
+        <img src="${s.image_url}" alt="${s.heading}" draggable="false">
+        <div class="bs-ov"></div>
+        <div class="bs-content">
+          <h1 class="bs-heading">${s.heading}</h1>
+          ${s.description ? `<p class="bs-desc">${s.description}</p>` : ''}
+          ${s.cta_text ? `<a href="${s.cta_link || '#collection'}" class="btn btn-gold bs-cta">${s.cta_text} →</a>` : ''}
+        </div>
+      </div>`).join('');
+  }
+  // else: keep the single static fallback slide already in the markup
+
+  document.getElementById('bsDots').innerHTML = bsSlides.length
+    ? bsSlides.map((_, i) => `<button class="bs-dot" onclick="bsGoTo(${i})"><span class="bs-dot-fill"></span></button>`).join('')
+    : '';
+
+  bsGoTo(0);
+  initBsDrag();
+}
+
+function bsGoTo(i) {
+  const count = bsSlides.length || 1;
+  bsIndex = (i + count) % count;
+  document.getElementById('bsTrack').style.transform = `translateX(-${bsIndex * 100}%)`;
+  document.querySelectorAll('#bsDots .bs-dot').forEach((d, idx) => {
+    d.classList.toggle('on', idx === bsIndex);
+    d.classList.toggle('done', false);
+  });
+  clearTimeout(bsTimer);
+  if (count > 1) bsTimer = setTimeout(() => bsGoTo(bsIndex + 1), BS_INTERVAL);
+}
+
+// ── Drag / swipe to change slides ───────────────────────
+function initBsDrag() {
+  const slider = document.getElementById('bannerSlider');
+  const track  = document.getElementById('bsTrack');
+  if (slider.dataset.dragBound) return; // bind listeners once
+  slider.dataset.dragBound = '1';
+
+  let dragging = false, moved = false, startX = 0, width = 1;
+
+  const onDown = (e) => {
+    if ((bsSlides.length || 1) < 2) return;
+    dragging = true; moved = false;
+    startX = e.clientX;
+    width = slider.getBoundingClientRect().width;
+    track.classList.add('dragging');
+    slider.classList.add('dragging');
+    clearTimeout(bsTimer);
+    slider.setPointerCapture?.(e.pointerId);
+  };
+
+  const onMove = (e) => {
+    if (!dragging) return;
+    const delta = e.clientX - startX;
+    if (Math.abs(delta) > 4) moved = true;
+    const pct = (delta / width) * 100;
+    track.style.transform = `translateX(calc(-${bsIndex * 100}% + ${pct}%))`;
+  };
+
+  const onUp = (e) => {
+    if (!dragging) return;
+    dragging = false;
+    track.classList.remove('dragging');
+    slider.classList.remove('dragging');
+    const delta = e.clientX - startX;
+    const pct = (delta / width) * 100;
+    if (moved && Math.abs(pct) > 12) {
+      bsGoTo(bsIndex + (pct < 0 ? 1 : -1));
+    } else {
+      bsGoTo(bsIndex); // snap back / restart autoplay
+    }
+    if (moved) {
+      // Swallow the click that follows a drag so CTA links don't fire.
+      const swallow = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
+      slider.addEventListener('click', swallow, { capture: true, once: true });
+    }
+  };
+
+  slider.addEventListener('pointerdown', onDown);
+  slider.addEventListener('pointermove', onMove);
+  slider.addEventListener('pointerup', onUp);
+  slider.addEventListener('pointercancel', onUp);
+  slider.addEventListener('dragstart', (e) => e.preventDefault());
 }
 
 function renderCategoryChips() {
@@ -1072,7 +1173,7 @@ function closeMenu() {
 window.addEventListener('scroll', closeMenu);
 
 (async function init() {
-  await Promise.all([loadSettings(), loadCategories(), loadProducts()]);
+  await Promise.all([loadSettings(), loadCategories(), loadProducts(), loadBannerSlides()]);
 })();
 </script>
 </body>

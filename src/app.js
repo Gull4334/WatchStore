@@ -18,6 +18,7 @@ const publicCategoriesRouter = require('./routes/public.categories');
 const publicProductsRouter   = require('./routes/public.products');
 const publicOrdersRouter     = require('./routes/public.orders');
 const publicPaymentsRouter   = require('./routes/public.payments');
+const publicBannersRouter    = require('./routes/public.banners');
 
 // Admin routes
 const adminAuthRouter       = require('./routes/admin.auth');
@@ -31,6 +32,7 @@ const adminDiscountsRouter  = require('./routes/admin.discounts');
 const adminCustomersRouter  = require('./routes/admin.customers');
 const adminRefundsRouter    = require('./routes/admin.refunds');
 const adminSettingsRouter   = require('./routes/admin.settings');
+const adminBannersRouter    = require('./routes/admin.banners');
 
 const app = express();
 
@@ -81,6 +83,7 @@ app.use('/api/categories',  publicCategoriesRouter);
 app.use('/api/products',    publicProductsRouter);
 app.use('/api',             publicOrdersRouter);       // /api/discounts/validate, /api/orders, /api/orders/track
 app.use('/api/payments',    publicPaymentsRouter);
+app.use('/api/banners',     publicBannersRouter);
 
 // ─────────────────────────────────────────────────────────────
 // ADMIN AUTH (no guard — login creates the token)
@@ -101,6 +104,7 @@ app.use('/api/admin/discounts',    adminDiscountsRouter);
 app.use('/api/admin/customers',    adminCustomersRouter);
 app.use('/api/admin/refunds',      adminRefundsRouter);
 app.use('/api/admin/settings',     adminSettingsRouter);
+app.use('/api/admin/banners',      adminBannersRouter);
 
 // ── 404 catch-all ────────────────────────────────────────────
 app.use((_req, res) => R.notFound(res, 'Endpoint not found'));

@@ -16,7 +16,7 @@ router.get('/', async (_req, res) => {
       store_name, whatsapp_number, instagram_handle, admin_email,
       meezan_account_no, meezan_iban, easypaisa_number, jazzcash_number,
       shipping_fee, free_shipping_threshold, default_courier, low_stock_threshold,
-      ticker_text,
+      ticker_text, hero_stats,
       wa_template_order_placed, wa_template_payment_confirmed,
       wa_template_payment_rejected, wa_template_dispatched, wa_template_delivered,
       updated_at

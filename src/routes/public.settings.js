@@ -10,7 +10,7 @@ const R        = require('../utils/response');
 router.get('/public', async (_req, res) => {
   const { data, error } = await supabase
     .from('settings')
-    .select('store_name, whatsapp_number, instagram_handle, shipping_fee, free_shipping_threshold, default_courier, ticker_text')
+    .select('store_name, whatsapp_number, instagram_handle, shipping_fee, free_shipping_threshold, default_courier, ticker_text, hero_stats')
     .single();
 
   if (error) return R.error(res, 'Failed to load settings');

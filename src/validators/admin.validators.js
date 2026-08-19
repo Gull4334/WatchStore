@@ -140,6 +140,16 @@ const activityQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
+// ── Banner Slides ────────────────────────────────────────────
+const bannerSlideSchema = z.object({
+  heading:     z.string().min(2, 'Heading is required'),
+  description: z.string().optional(),
+  cta_text:    z.string().optional(),
+  cta_link:    z.string().optional(),
+  sort_order:  z.number().int().min(0).default(0),
+  status:      z.enum(['active','inactive']).default('active'),
+});
+
 // ── Settings ─────────────────────────────────────────────────
 const settingsSchema = z.object({
   store_name:                    z.string().min(2).optional(),
@@ -155,6 +165,10 @@ const settingsSchema = z.object({
   default_courier:               z.enum(['tcs','leopards','trax']).optional(),
   low_stock_threshold:           z.number().int().min(0).optional(),
   ticker_text:                   z.string().optional(),
+  hero_stats:                    z.array(z.object({
+                                    value: z.string().min(1),
+                                    label: z.string().min(1),
+                                  })).optional(),
   wa_template_order_placed:      z.string().optional(),
   wa_template_payment_confirmed: z.string().optional(),
   wa_template_payment_rejected:  z.string().optional(),
@@ -174,4 +188,5 @@ module.exports = {
   refundsQuerySchema,
   chartQuerySchema, activityQuerySchema,
   settingsSchema,
+  bannerSlideSchema,
 };

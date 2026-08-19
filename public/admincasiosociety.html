@@ -1084,6 +1084,10 @@ tbody td {
       <span class="sb-item-icon">◧</span>
       <span class="sb-item-label">Categories</span>
     </div>
+    <div class="sb-item" onclick="goTo('bannerslides',this)">
+      <span class="sb-item-icon">▭</span>
+      <span class="sb-item-label">Banner Slides</span>
+    </div>
     <div class="sb-item" onclick="goTo('discounts',this)">
       <span class="sb-item-icon">◇</span>
       <span class="sb-item-label">Discounts</span>
@@ -1478,6 +1482,26 @@ tbody td {
     </div>
 
     <!-- ════════════════════════════════════════
+         BANNER SLIDES
+    ════════════════════════════════════════ -->
+    <div class="view" id="view-bannerslides">
+      <div class="ph">
+        <div><div class="ph-ti">BANNER SLIDES</div><div class="ph-sub">Homepage hero slider management</div></div>
+        <div class="ph-actions">
+          <button class="btn btn-gold" onclick="openAddBanner()">+ Add Slide</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Slide</th><th>CTA</th><th>Order</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="bannersBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════
          DISCOUNTS
     ════════════════════════════════════════ -->
     <div class="view" id="view-discounts">
@@ -1619,6 +1643,11 @@ tbody td {
           <div class="fg"><label class="fl">Default Shipping Fee (PKR)</label><input class="fi" type="number" value="200"></div>
           <div class="fg"><label class="fl">Free Shipping Above (PKR)</label><input class="fi" type="number" value="5000"></div>
           <div class="fg"><label class="fl">Default Courier</label><select class="fsel"><option selected>TCS</option><option>Leopards</option><option>Trax</option></select></div>
+        </div>
+        <div class="setting-section">
+          <div class="ss-ti">HOMEPAGE STATS</div>
+          <div id="heroStatsRows"></div>
+          <button class="btn btn-outline" style="margin-top:6px;" onclick="addHeroStatRow()">+ Add Stat</button>
         </div>
         <div class="setting-section">
           <div class="ss-ti">CHANGE PASSWORD</div>
@@ -1892,6 +1921,41 @@ tbody td {
   </div>
 </div>
 
+<!-- Banner Slide Modal -->
+<div class="modal-bg" id="bnrModal">
+  <div class="modal modal-slim">
+    <div class="modal-hd">
+      <div class="modal-ti" id="bnrModalTi">ADD BANNER SLIDE</div>
+      <button class="modal-cl" onclick="closeModal('bnrModal');resetBannerModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg"><label class="fl">Heading *</label><input class="fi" id="bm-heading" placeholder="e.g. NEW PRO TREK PRJ-01"></div>
+      <div class="fg"><label class="fl">Description</label><textarea class="fta" id="bm-desc" placeholder="Simple watches for active recreation with solar battery."></textarea></div>
+      <div class="fg-row">
+        <div class="fg"><label class="fl">CTA Button Text</label><input class="fi" id="bm-cta-text" placeholder="Shop Collection"></div>
+        <div class="fg"><label class="fl">CTA Link</label><input class="fi" id="bm-cta-link" placeholder="#collection"></div>
+      </div>
+      <div class="fg-row">
+        <div class="fg"><label class="fl">Sort Order</label><input class="fi" type="number" id="bm-sort" placeholder="0"></div>
+        <div class="fg"><label class="fl">Status</label><select class="fsel" id="bm-status"><option>Active</option><option>Inactive</option></select></div>
+      </div>
+      <div class="fg">
+        <label class="fl">Slide Image *</label>
+        <div id="bm-img-preview" style="margin-bottom:10px;"></div>
+        <label class="btn btn-outline" id="bm-img-btn" style="display:inline-flex;cursor:pointer;">
+          📤 <span style="margin-left:6px;">Upload Image</span>
+          <input type="file" id="bm-img-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleBannerImageSelect(event)">
+        </label>
+        <div id="bm-img-status" style="font-family:var(--ff-m);font-size:9px;color:var(--muted);margin-top:8px;"></div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-outline" onclick="closeModal('bnrModal');resetBannerModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="saveBannerAction()">SAVE SLIDE</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast Container -->
 <div class="toast-wrap" id="toastWrap"></div>
 
@@ -1994,7 +2058,7 @@ const FB = 'https://gshock.casio.com/content/dam/casio/product-info/locales/us/e
 // ── API-driven state cache ──────────────────────
 const STATE = {
   orders: [], payments: [], shipments: [], products: [],
-  customers: [], categories: [], discounts: [], refunds: [],
+  customers: [], categories: [], discounts: [], refunds: [], banners: [],
   settings: {}, activity: [], dashStats: {},
 };
 let CATEGORY_LIST = []; // for product form dropdowns
@@ -2079,6 +2143,7 @@ function renderView(id) {
     shipments: renderShipments,
     products: renderProducts,
     categories: renderCategories,
+    bannerslides: renderBanners,
     discounts: renderDiscounts,
     analytics: renderAnalytics,
     customers: renderCustomers,
@@ -2581,6 +2646,7 @@ async function viewOrder(orderId) {
           <div class="od-row"><span>Phone</span><span>${o.whatsapp_number||''}</span></div>
           <div class="od-row"><span>City</span><span>${o.city||''}</span></div>
           <div class="od-row"><span>Address</span><span style="font-size:11px;text-align:right;max-width:180px;">${o.address||'—'}</span></div>
+          ${o.instagram_handle ? `<div class="od-row"><span>Instagram</span><span>${o.instagram_handle}</span></div>` : ''}
         </div>
         <div class="od-box">
           <div class="od-box-ti">Order Info</div>
@@ -2595,6 +2661,11 @@ async function viewOrder(orderId) {
           ${o.shipment?.tcs_tracking_number ? `<div class="od-row"><span>TCS</span><span style="color:var(--purple);font-family:var(--ff-m)">${o.shipment.tcs_tracking_number}</span></div>` : ''}
         </div>
       </div>
+      ${o.order_notes ? `
+      <div class="od-box" style="margin-bottom:14px;">
+        <div class="od-box-ti">Order Notes</div>
+        <div style="font-size:12px;line-height:1.6;">${o.order_notes}</div>
+      </div>` : ''}
       ${o.payment && (o.payment.screenshot_url || o.payment.transaction_ref) ? `
       <div class="od-box" style="margin-bottom:14px;">
         <div class="od-box-ti">Payment Info</div>
@@ -3080,6 +3151,161 @@ async function saveCategoryAction() {
 }
 
 // ══════════════════════════════════════════════
+// BANNER SLIDES
+// ══════════════════════════════════════════════
+async function renderBanners() {
+  const tbody = document.getElementById('bannersBody');
+  setLoading(tbody, 'LOADING SLIDES...');
+  try {
+    const data = await apiFetch('/api/admin/banners');
+    STATE.banners = Array.isArray(data) ? data : [];
+    tbody.innerHTML = STATE.banners.map(b => `
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <img src="${b.image_url||FB}" onerror="this.src='${FB}'" style="width:48px;height:32px;object-fit:cover;border-radius:4px;border:1px solid var(--border);">
+            <div class="td-name">${b.heading}</div>
+          </div>
+        </td>
+        <td><div class="td-mono">${b.cta_text || '—'}</div></td>
+        <td><div class="td-amount" style="font-size:16px;">${b.sort_order}</div></td>
+        <td>${badge(b.status==='active'?'active':'inactive')}</td>
+        <td>${tdActions(
+          iconBtn('✏','Edit','',`openEditBanner('${b.id}')`),
+          iconBtn('✕','Delete','danger',`deleteBannerAction('${b.id}','${(b.heading||'').replace(/'/g,"\\'")}')`)
+        )}</td>
+      </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">No banner slides — add one to populate the homepage slider</td></tr>';
+  } catch(e) { toast('Banner slides load error: ' + e.message, 'error'); }
+}
+
+let editingBannerId = null;
+
+function renderBannerImagePreview(url) {
+  const preview = document.getElementById('bm-img-preview');
+  preview.innerHTML = url
+    ? `<div style="position:relative;width:160px;height:90px;">
+         <img src="${url}" style="width:100%;height:100%;object-fit:cover;border:1px solid var(--border);border-radius:6px;">
+         <button type="button" onclick="removeBannerImage()" title="Remove" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:11px;line-height:1;">✕</button>
+       </div>`
+    : '<div style="font-size:11px;color:var(--muted)">No image yet</div>';
+  const btn = document.getElementById('bm-img-btn');
+  btn.style.opacity = editingBannerId ? '1' : '.5';
+  btn.style.pointerEvents = editingBannerId ? 'auto' : 'none';
+}
+
+function resetBannerModal() {
+  editingBannerId = null;
+  document.getElementById('bnrModalTi').textContent = 'ADD BANNER SLIDE';
+  document.getElementById('bm-heading').value = '';
+  document.getElementById('bm-desc').value = '';
+  document.getElementById('bm-cta-text').value = '';
+  document.getElementById('bm-cta-link').value = '';
+  document.getElementById('bm-sort').value = '';
+  document.getElementById('bm-status').value = 'Active';
+  document.getElementById('bm-img-status').textContent = '';
+  renderBannerImagePreview('');
+}
+
+function openAddBanner() {
+  resetBannerModal();
+  document.getElementById('bm-img-status').textContent = 'Save the slide first, then add an image.';
+  openModal('bnrModal');
+}
+
+function openEditBanner(id) {
+  const b = STATE.banners.find(x => x.id === id);
+  if (!b) return;
+  resetBannerModal();
+  editingBannerId = id;
+  document.getElementById('bnrModalTi').textContent = 'EDIT BANNER SLIDE';
+  document.getElementById('bm-heading').value = b.heading || '';
+  document.getElementById('bm-desc').value = b.description || '';
+  document.getElementById('bm-cta-text').value = b.cta_text || '';
+  document.getElementById('bm-cta-link').value = b.cta_link || '';
+  document.getElementById('bm-sort').value = b.sort_order ?? 0;
+  document.getElementById('bm-status').value = b.status === 'active' ? 'Active' : 'Inactive';
+  document.getElementById('bm-img-status').textContent = '';
+  renderBannerImagePreview(b.image_url || '');
+  openModal('bnrModal');
+}
+
+async function handleBannerImageSelect(event) {
+  const file = event.target.files?.[0];
+  event.target.value = '';
+  if (!file || !editingBannerId) return;
+  const statusEl = document.getElementById('bm-img-status');
+  statusEl.textContent = 'Uploading...';
+  try {
+    const fd = new FormData();
+    fd.append('image', file);
+    const res = await apiFetchForm(`/api/admin/banners/${editingBannerId}/image`, fd);
+    renderBannerImagePreview(res.image_url);
+    const cached = STATE.banners.find(b => b.id === editingBannerId);
+    if (cached) cached.image_url = res.image_url;
+    renderBanners();
+    toast('Slide image updated', 'success');
+  } catch (e) {
+    toast('Upload failed: ' + e.message, 'error');
+  } finally {
+    statusEl.textContent = '';
+  }
+}
+
+async function removeBannerImage() {
+  if (!editingBannerId) return;
+  if (!confirm('Remove this slide image?')) return;
+  try {
+    await apiFetch(`/api/admin/banners/${editingBannerId}/image`, { method: 'DELETE' });
+    renderBannerImagePreview('');
+    const cached = STATE.banners.find(b => b.id === editingBannerId);
+    if (cached) cached.image_url = null;
+    renderBanners();
+    toast('Slide image removed', 'success');
+  } catch (e) {
+    toast('Remove failed: ' + e.message, 'error');
+  }
+}
+
+async function deleteBannerAction(id, heading) {
+  if (!confirm(`Delete banner slide "${heading}"?`)) return;
+  try {
+    await apiFetch(`/api/admin/banners/${id}`, { method: 'DELETE' });
+    toast(`"${heading}" deleted`, 'success');
+    renderBanners();
+  } catch (e) {
+    toast(e.message || 'Delete failed', 'error');
+  }
+}
+
+async function saveBannerAction() {
+  const heading = document.getElementById('bm-heading').value.trim();
+  if (!heading) { toast('Heading required', 'error'); return; }
+  const body = {
+    heading,
+    description: document.getElementById('bm-desc').value.trim(),
+    cta_text:    document.getElementById('bm-cta-text').value.trim(),
+    cta_link:    document.getElementById('bm-cta-link').value.trim(),
+    sort_order:  parseInt(document.getElementById('bm-sort').value) || 0,
+    status:      document.getElementById('bm-status').value.toLowerCase(),
+  };
+
+  try {
+    if (editingBannerId) {
+      await apiFetch(`/api/admin/banners/${editingBannerId}`, { method:'PUT', body:JSON.stringify(body) });
+      toast('Banner slide updated', 'success');
+      closeModal('bnrModal');
+      resetBannerModal();
+      renderBanners();
+    } else {
+      const created = await apiFetch('/api/admin/banners', { method:'POST', body:JSON.stringify(body) });
+      toast('Slide created — add an image below, then close when done', 'success');
+      await renderBanners();
+      openEditBanner(created.id);
+    }
+  } catch(e) { toast('Save failed: ' + e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════
 // DISCOUNTS
 // ══════════════════════════════════════════════
 async function renderDiscounts() {
@@ -3413,6 +3639,9 @@ async function renderSettings() {
     if (shipFields[1]) shipFields[1].value = s.free_shipping_threshold || '';
     if (shipFields[2]) shipFields[2].value = s.default_courier || 'tcs';
 
+    // Homepage stats
+    renderHeroStatRows(Array.isArray(s.hero_stats) && s.hero_stats.length ? s.hero_stats : [{value:'',label:''}]);
+
     // WA templates
     WA_TEMPLATES[0].msg = s.wa_template_order_placed || '';
     WA_TEMPLATES[1].msg = s.wa_template_payment_confirmed || '';
@@ -3442,12 +3671,42 @@ async function saveAllSettings() {
     shipping_fee:           parseInt(shipFields[0]?.value) || 200,
     free_shipping_threshold:parseInt(shipFields[1]?.value) || 5000,
     default_courier:        shipFields[2]?.value || 'tcs',
+    hero_stats:             getHeroStatRows(),
   };
 
   try {
     await apiFetch('/api/admin/settings', { method:'PUT', body:JSON.stringify(body) });
     toast('Settings saved successfully', 'success');
   } catch(e) { toast('Save failed: ' + e.message, 'error'); }
+}
+
+function renderHeroStatRows(stats) {
+  document.getElementById('heroStatsRows').innerHTML = stats.map((s, i) => `
+    <div class="fg-row hero-stat-row" style="align-items:flex-end;gap:8px;">
+      <div class="fg"><label class="fl">Value</label><input class="fi hs-value" value="${(s.value||'').replace(/"/g,'&quot;')}" placeholder="500+"></div>
+      <div class="fg"><label class="fl">Label</label><input class="fi hs-label" value="${(s.label||'').replace(/"/g,'&quot;')}" placeholder="Watches Sold"></div>
+      <button class="btn btn-outline" style="flex-shrink:0;" onclick="removeHeroStatRow(this)">✕</button>
+    </div>`).join('');
+}
+
+function addHeroStatRow() {
+  const rows = getHeroStatRows();
+  rows.push({ value: '', label: '' });
+  renderHeroStatRows(rows);
+}
+
+function removeHeroStatRow(btn) {
+  const rows = getHeroStatRows();
+  const idx = Array.from(document.querySelectorAll('.hero-stat-row')).indexOf(btn.closest('.hero-stat-row'));
+  rows.splice(idx, 1);
+  renderHeroStatRows(rows.length ? rows : [{value:'',label:''}]);
+}
+
+function getHeroStatRows() {
+  return Array.from(document.querySelectorAll('.hero-stat-row')).map(row => ({
+    value: row.querySelector('.hs-value')?.value.trim() || '',
+    label: row.querySelector('.hs-label')?.value.trim() || '',
+  })).filter(s => s.value || s.label);
 }
 
 async function changePassword() {
