@@ -144,6 +144,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:500;height:68px;display:flex;ali
 .qv-price{font-family:var(--font-d);font-size:32px;color:var(--gold)}
 .qv-old{font-family:var(--font-m);font-size:13px;color:var(--muted);text-decoration:line-through}
 .qv-desc{color:var(--muted);line-height:1.8;font-size:14px;margin-bottom:32px;flex:1}
+.qv-desc-p{white-space:pre-line;margin-bottom:14px}
+.qv-details{border-top:1px solid var(--border);padding-top:20px}
+.qv-details-ti{font-family:var(--font-m);font-size:10px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:14px}
+.qv-details-row{font-size:13px;line-height:2}
+.qvd-label{color:var(--white)}
+.qvd-value{color:var(--muted);text-decoration:underline;text-decoration-color:rgba(240,237,230,.25);text-underline-offset:3px}
 @media(max-width:768px){.qv-modal{grid-template-columns:1fr}.qv-slider{min-height:280px}.qv-info{padding:28px 24px}}
 
 .trust{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
@@ -894,6 +900,43 @@ function cyclePcardImage(pid, dir) {
   container.querySelectorAll('.pdot').forEach((d, i) => d.classList.toggle('on', i === idx));
 }
 
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Renders a product description that mixes free-text paragraphs with
+// "Label: Value" spec lines (one per line) as a readable DETAILS list,
+// while leaving plain prose lines as normal paragraphs.
+function renderProductDescription(text) {
+  if (!text || !text.trim()) return '<p class="qv-desc-p">No description available for this watch yet.</p>';
+
+  const specRe = /^([A-Za-z][A-Za-z \/&-]{1,40}):\s+(.+)$/;
+  const blocks = [];
+  let current = null;
+
+  text.split('\n').forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) { current = null; return; }
+    const m = trimmed.match(specRe);
+    const type = m ? 'spec' : 'prose';
+    if (!current || current.type !== type) {
+      current = { type, items: [] };
+      blocks.push(current);
+    }
+    current.items.push(m ? { label: m[1].trim(), value: m[2].trim() } : trimmed);
+  });
+
+  return blocks.map(b => {
+    if (b.type === 'spec') {
+      const rows = b.items.map(it =>
+        `<div class="qv-details-row"><span class="qvd-label">${escapeHtml(it.label)}:</span> <span class="qvd-value">${escapeHtml(it.value)}</span></div>`
+      ).join('');
+      return `<div class="qv-details"><div class="qv-details-ti">Details</div>${rows}</div>`;
+    }
+    return `<p class="qv-desc-p">${b.items.map(escapeHtml).join('<br>')}</p>`;
+  }).join('');
+}
+
 function openQuickView(id) {
   const w = WATCHES.find(x => x.id === id);
   if (!w) return;
@@ -905,7 +948,7 @@ function openQuickView(id) {
   document.getElementById('qvName').textContent = w.name;
   document.getElementById('qvPrice').textContent = `PKR ${w.price.toLocaleString()}`;
   document.getElementById('qvOld').textContent = w.old ? `PKR ${w.old.toLocaleString()}` : '';
-  document.getElementById('qvDesc').textContent = w.description || 'No description available for this watch yet.';
+  document.getElementById('qvDesc').innerHTML = renderProductDescription(w.description);
   const qvTrack = document.getElementById('qvTrack');
   qvTrack.style.transition = 'none';
   qvTrack.style.transform = 'translateX(0)';
